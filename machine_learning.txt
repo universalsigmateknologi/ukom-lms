@@ -1,0 +1,598 @@
+courses/models.py
+from django.db import models
+from django.utils.text import slugify
+
+
+class Category(models.Model):
+    name = models.CharField(max_length=100, verbose_name="Nama Kategori")
+    slug = models.SlugField(max_length=100, unique=True, editable=False)
+    description = models.TextField(blank=True, verbose_name="Deskripsi")
+    icon = models.CharField(
+        max_length=50, blank=True, verbose_name="Icon",
+        help_text="Contoh: fas fa-code, fas fa-paint-brush"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Kategori"
+        verbose_name_plural = "Kategori"
+        ordering = ["name"]
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+
+class Course(models.Model):
+    LEVEL_CHOICES = [
+        ("beginner", "Pemula"),
+        ("intermediate", "Menengah"),
+        ("advanced", "Lanjutan"),
+    ]
+    STATUS_CHOICES = [
+        ("draft", "Draft"),
+        ("published", "Dipublikasi"),
+        ("archived", "Diarsipkan"),
+    ]
+
+    title = models.CharField(max_length=200, verbose_name="Judul")
+    slug = models.SlugField(max_length=200, unique=True, editable=False)
+    description = models.TextField(verbose_name="Deskripsi")
+    thumbnail = models.ImageField(
+        upload_to="courses/thumbnails/", blank=True, null=True, verbose_name="Thumbnail"
+    )
+    category = models.ForeignKey(
+        Category, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="courses", verbose_name="Kategori"
+    )
+    instructor = models.ForeignKey(
+        "auth.User", on_delete=models.CASCADE, related_name="courses_taught",
+        verbose_name="Instruktur", limit_choices_to={"is_staff": True}
+    )
+    level = models.CharField(
+        max_length=20, choices=LEVEL_CHOICES, default="beginner", verbose_name="Level"
+    )
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default="draft", verbose_name="Status"
+    )
+    total_duration = models.IntegerField(default=0, verbose_name="Total Durasi (menit)")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Dibuat")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Diperbarui")
+
+    class Meta:
+        verbose_name = "Kursus"
+        verbose_name_plural = "Kursus"
+        ordering = ["-created_at"]
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def total_modules(self):
+        return self.modules.count()
+
+    @property
+    def total_lessons(self):
+        return Lesson.objects.filter(module__course=self).count()
+
+    @property
+    def total_students(self):
+        return self.enrollments.filter(status="active").count()
+
+
+class Module(models.Model):
+    course = models.ForeignKey(
+        Course, on_delete=models.CASCADE, related_name="modules", verbose_name="Kursus"
+    )
+    title = models.CharField(max_length=200, verbose_name="Judul Module")
+    description = models.TextField(blank=True, verbose_name="Deskripsi")
+    order = models.PositiveIntegerField(default=0, verbose_name="Urutan")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Module"
+        verbose_name_plural = "Module"
+        ordering = ["course", "order"]
+        unique_together = ["course", "order"]
+
+    def __str__(self):
+        return f"{self.course.title} - {self.title}"
+
+    @property
+    def total_lessons(self):
+        return self.lessons.count()
+
+    @property
+    def total_duration(self):
+        return self.lessons.aggregate(total=models.Sum("duration"))["total"] or 0
+
+
+class Lesson(models.Model):
+    CONTENT_TYPE_CHOICES = [
+        ("video", "Video"),
+        ("text", "Teks"),
+        ("article", "Artikel"),
+        ("quiz", "Kuis"),
+    ]
+
+    module = models.ForeignKey(
+        Module, on_delete=models.CASCADE, related_name="lessons", verbose_name="Module"
+    )
+    title = models.CharField(max_length=200, verbose_name="Judul Materi")
+    content_type = models.CharField(
+        max_length=20, choices=CONTENT_TYPE_CHOICES, default="text", verbose_name="Tipe Konten"
+    )
+    content = models.TextField(blank=True, verbose_name="Konten")
+    video_url = models.URLField(blank=True, verbose_name="URL Video")
+    duration = models.PositiveIntegerField(null=True, blank=True, verbose_name="Durasi (menit)")
+    order = models.PositiveIntegerField(default=0, verbose_name="Urutan")
+    is_preview = models.BooleanField(default=False, verbose_name="Bisa Di-preview")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    # ========== FIELD KUIS ==========
+    time_limit = models.PositiveIntegerField(
+        null=True, blank=True, verbose_name="Batas Waktu (menit)",
+        help_text="Kosongkan jika tidak ada batas waktu"
+    )
+    passing_grade = models.PositiveIntegerField(
+        null=True, blank=True, verbose_name="Nilai Minimum (%)",
+        help_text="Kosongkan jika tidak ada syarat kelulusan"
+    )
+    max_attempts = models.PositiveIntegerField(
+        null=True, blank=True, verbose_name="Maks Percobaan",
+        help_text="Kosongkan jika tidak terbatas"
+    )
+    shuffle_questions = models.BooleanField(
+        default=False, verbose_name="Acak Urutan Soal"
+    )
+    shuffle_choices = models.BooleanField(
+        default=False, verbose_name="Acak Urutan Pilihan Jawaban"
+    )
+
+    class Meta:
+        verbose_name = "Materi"
+        verbose_name_plural = "Materi"
+        ordering = ["module", "order"]
+        unique_together = ["module", "order"]
+
+    def __str__(self):
+        return f"{self.module.title} - {self.title}"
+
+    @property
+    def is_quiz(self):
+        return self.content_type == "quiz"
+
+    @property
+    def total_questions(self):
+        if self.is_quiz:
+            from quizzes.models import Question
+            return Question.objects.filter(lesson=self).count()
+        return 0
+
+courses/admin.py
+from django.contrib import admin
+from .models import Category, Course, Module, Lesson
+
+
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ["name", "slug", "created_at"]
+    search_fields = ["name"]
+    prepopulated_fields = {"slug": ("name",)}
+    list_per_page = 20
+
+
+class ModuleInline(admin.TabularInline):
+    model = Module
+    extra = 1
+    fields = ["title", "description", "order"]
+    ordering = ["order"]
+
+
+@admin.register(Course)
+class CourseAdmin(admin.ModelAdmin):
+    list_display = [
+        "title", "category", "instructor", "level", "status",
+        "total_duration", "created_at",
+    ]
+    list_filter = ["status", "level", "category"]
+    search_fields = ["title", "description"]
+    prepopulated_fields = {"slug": ("title",)}
+    list_editable = ["status"]
+    inlines = [ModuleInline]
+    list_per_page = 20
+
+
+@admin.register(Module)
+class ModuleAdmin(admin.ModelAdmin):
+    list_display = ["title", "course", "order", "total_lessons", "total_duration"]
+    list_filter = ["course"]
+    search_fields = ["title", "course__title"]
+    list_per_page = 20
+
+
+@admin.register(Lesson)
+class LessonAdmin(admin.ModelAdmin):
+    list_display = [
+        "title", "module", "content_type", "duration", "order",
+        "is_preview", "created_at",
+    ]
+    list_filter = ["content_type", "module__course"]
+    search_fields = ["title", "module__title"]
+    list_editable = ["is_preview", "order"]
+    list_per_page = 20
+
+    fieldsets = (
+        ("Informasi Utama", {
+            "fields": ("module", "title", "content_type", "order", "is_preview")
+        }),
+        ("Konten Materi", {
+            "fields": ("content", "video_url", "duration"),
+            "classes": ("wide",),
+        }),
+        ("Pengaturan Kuis", {
+            "fields": (
+                "time_limit", "passing_grade", "max_attempts",
+                "shuffle_questions", "shuffle_choices",
+            ),
+            "classes": ("collapse",),
+            "description": "Hanya diisi jika tipe konten = Kuis",
+        }),
+    )
+
+quizzes/models.py
+from django.db import models
+
+
+class Question(models.Model):
+    QUESTION_TYPE_CHOICES = [
+        ("multiple_choice", "Pilihan Ganda"),
+        ("true_false", "Benar/Salah"),
+    ]
+
+    lesson = models.ForeignKey(
+        "courses.Lesson",
+        on_delete=models.CASCADE,
+        related_name="questions",
+        verbose_name="Materi Kuis",
+        limit_choices_to={"content_type": "quiz"},
+    )
+    question_text = models.TextField(verbose_name="Teks Soal")
+    question_type = models.CharField(
+        max_length=20, choices=QUESTION_TYPE_CHOICES,
+        default="multiple_choice", verbose_name="Tipe Soal"
+    )
+    order = models.PositiveIntegerField(default=0, verbose_name="Urutan")
+    explanation = models.TextField(
+        blank=True, verbose_name="Penjelasan",
+        help_text="Akan ditampilkan setelah user menjawab"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Soal"
+        verbose_name_plural = "Soal"
+        ordering = ["lesson", "order"]
+        unique_together = ["lesson", "order"]
+
+    def __str__(self):
+        return f"{self.lesson.title} - Soal #{self.order}"
+
+
+class Choice(models.Model):  # ✅ PERBAIKAN DI SINI
+    question = models.ForeignKey(
+        Question,
+        on_delete=models.CASCADE,
+        related_name="choices",
+        verbose_name="Soal",
+    )
+    choice_text = models.CharField(max_length=500, verbose_name="Teks Pilihan")
+    is_correct = models.BooleanField(default=False, verbose_name="Jawaban Benar")
+    order = models.PositiveIntegerField(default=0, verbose_name="Urutan")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Pilihan Jawaban"
+        verbose_name_plural = "Pilihan Jawaban"
+        ordering = ["question", "order"]
+        unique_together = ["question", "order"]
+
+    def __str__(self):
+        return f"{self.question} - {self.choice_text}"
+
+
+class QuizAttempt(models.Model):
+    user = models.ForeignKey(
+        "auth.User",
+        on_delete=models.CASCADE,
+        related_name="quiz_attempts",
+        verbose_name="User",
+    )
+    lesson = models.ForeignKey(
+        "courses.Lesson",
+        on_delete=models.CASCADE,
+        related_name="quiz_attempts",
+        verbose_name="Materi Kuis",
+    )
+    score = models.PositiveIntegerField(default=0, verbose_name="Skor (%)")
+    total_questions = models.PositiveIntegerField(default=0, verbose_name="Total Soal")
+    correct_answers = models.PositiveIntegerField(default=0, verbose_name="Jawaban Benar")
+    time_spent = models.PositiveIntegerField(
+        default=0, verbose_name="Waktu Dihabiskan (detik)"
+    )
+    is_passed = models.BooleanField(default=False, verbose_name="Lulus")
+    attempted_at = models.DateTimeField(auto_now_add=True, verbose_name="Waktu Mulai")
+    completed_at = models.DateTimeField(null=True, blank=True, verbose_name="Waktu Selesai")
+
+    class Meta:
+        verbose_name = "Percobaan Kuis"
+        verbose_name_plural = "Percobaan Kuis"
+        ordering = ["-attempted_at"]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.lesson.title} ({self.score}%)"
+
+    @property
+    def attempt_number(self):
+        return (
+            QuizAttempt.objects.filter(
+                user=self.user, lesson=self.lesson,
+                attempted_at__lte=self.attempted_at
+            ).count()
+        )
+
+
+class UserAnswer(models.Model):
+    attempt = models.ForeignKey(
+        QuizAttempt,
+        on_delete=models.CASCADE,
+        related_name="answers",
+        verbose_name="Percobaan",
+    )
+    question = models.ForeignKey(
+        Question,
+        on_delete=models.CASCADE,
+        related_name="user_answers",
+        verbose_name="Soal",
+    )
+    selected_choice = models.ForeignKey(
+        Choice,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Jawaban Dipilih",
+        help_text="Kosongkan jika tidak dijawab",
+    )
+    is_correct = models.BooleanField(default=False, verbose_name="Jawaban Benar")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Jawaban User"
+        verbose_name_plural = "Jawaban User"
+        unique_together = ["attempt", "question"]
+
+    def __str__(self):
+        choice_text = self.selected_choice.choice_text if self.selected_choice else "Tidak dijawab"
+        return f"{self.attempt} - {self.question} → {choice_text}"
+
+quizzes/admin.py
+from django.contrib import admin
+from .models import Question, Choice, QuizAttempt, UserAnswer
+
+
+class ChoiceInline(admin.TabularInline):
+    model = Choice
+    extra = 2
+    fields = ["choice_text", "is_correct", "order"]
+    ordering = ["order"]
+    min_num = 2
+
+
+@admin.register(Question)
+class QuestionAdmin(admin.ModelAdmin):
+    list_display = [
+        "question_text_short", "lesson", "question_type", "order", "total_choices", "created_at"
+    ]
+    list_filter = ["question_type", "lesson__module__course"]
+    search_fields = ["question_text", "lesson__title"]
+    inlines = [ChoiceInline]
+    list_per_page = 20
+
+    fieldsets = (
+        ("Soal", {
+            "fields": ("lesson", "question_text", "question_type", "order")
+        }),
+        ("Penjelasan", {
+            "fields": ("explanation",),
+            "classes": ("wide",),
+        }),
+    )
+
+    @admin.display(description="Teks Soal")
+    def question_text_short(self, obj):
+        return obj.question_text[:80] + "..." if len(obj.question_text) > 80 else obj.question_text
+
+    @admin.display(description="Jumlah Pilihan")
+    def total_choices(self, obj):
+        return obj.choices.count()
+
+
+class UserAnswerInline(admin.TabularInline):
+    model = UserAnswer
+    extra = 0
+    readonly_fields = ["question", "selected_choice", "is_correct"]
+    can_delete = False
+    max_num = 0
+
+
+@admin.register(QuizAttempt)
+class QuizAttemptAdmin(admin.ModelAdmin):
+    list_display = [
+        "user", "lesson", "attempt_number", "score", "total_questions",
+        "correct_answers", "time_spent_formatted", "is_passed", "attempted_at",
+    ]
+    list_filter = ["is_passed", "lesson__module__course"]
+    search_fields = ["user__username", "user__email", "lesson__title"]
+    inlines = [UserAnswerInline]
+    list_per_page = 20
+
+    @admin.display(description="Percobaan Ke")
+    def attempt_number(self, obj):
+        return obj.attempt_number
+
+    @admin.display(description="Waktu")
+    def time_spent_formatted(self, obj):
+        minutes, seconds = divmod(obj.time_spent, 60)
+        return f"{minutes:02d}:{seconds:02d}"
+
+
+@admin.register(UserAnswer)
+class UserAnswerAdmin(admin.ModelAdmin):
+    list_display = [
+        "attempt", "question", "selected_choice", "is_correct", "created_at"
+    ]
+    list_filter = ["is_correct", "attempt__lesson"]
+    search_fields = ["question__question_text", "attempt__user__username"]
+    list_per_page = 20
+
+enrollments/models.py
+from django.db import models
+
+
+class Enrollment(models.Model):
+    STATUS_CHOICES = [
+        ("active", "Aktif"),
+        ("completed", "Selesai"),
+        ("dropped", "Keluar"),
+    ]
+
+    user = models.ForeignKey(
+        "auth.User",
+        on_delete=models.CASCADE,
+        related_name="enrollments",
+        verbose_name="User",
+    )
+    course = models.ForeignKey(
+        "courses.Course",
+        on_delete=models.CASCADE,
+        related_name="enrollments",
+        verbose_name="Kursus",
+    )
+    enrolled_at = models.DateTimeField(auto_now_add=True, verbose_name="Tanggal Daftar")
+    completed_at = models.DateTimeField(null=True, blank=True, verbose_name="Tanggal Selesai")
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default="active", verbose_name="Status"
+    )
+
+    class Meta:
+        verbose_name = "Pendaftaran"
+        verbose_name_plural = "Pendaftaran"
+        unique_together = ["user", "course"]
+        ordering = ["-enrolled_at"]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.course.title}"
+
+    @property
+    def progress_percentage(self):
+        """Hitung persentase progres berdasarkan lesson yang sudah selesai."""
+        from courses.models import Lesson
+
+        total_lessons = Lesson.objects.filter(module__course=self.course).count()
+        if total_lessons == 0:
+            return 0
+
+        completed = self.lesson_progresses.filter(is_completed=True).count()
+        return int((completed / total_lessons) * 100)
+
+
+class LessonProgress(models.Model):
+    user = models.ForeignKey(
+        "auth.User",
+        on_delete=models.CASCADE,
+        related_name="lesson_progresses",
+        verbose_name="User",
+    )
+    lesson = models.ForeignKey(
+        "courses.Lesson",
+        on_delete=models.CASCADE,
+        related_name="progresses",
+        verbose_name="Materi",
+    )
+    is_completed = models.BooleanField(default=False, verbose_name="Selesai")
+    completed_at = models.DateTimeField(null=True, blank=True, verbose_name="Tanggal Selesai")
+    last_accessed = models.DateTimeField(null=True, blank=True, verbose_name="Terakhir Diakses")
+
+    class Meta:
+        verbose_name = "Progres Materi"
+        verbose_name_plural = "Progres Materi"
+        unique_together = ["user", "lesson"]
+        ordering = ["-last_accessed"]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.lesson.title}"
+
+enrollments/admin.py
+from django.contrib import admin
+from django.utils.html import format_html
+from django.urls import reverse
+from .models import Enrollment, LessonProgress
+
+
+@admin.register(Enrollment)
+class EnrollmentAdmin(admin.ModelAdmin):
+    list_display = [
+        "user",
+        "course",
+        "status",
+        "enrolled_at",
+        "completed_at",
+        "progress_percentage",
+        "view_progress",
+    ]
+    list_filter = ["status", "course"]
+    search_fields = ["user__username", "user__email", "course__title"]
+    list_editable = ["status"]
+    list_per_page = 20
+
+    @admin.display(description="Progres")
+    def progress_percentage(self, obj):
+        return f"{obj.progress_percentage}%"
+
+    @admin.display(description="Detail Progres")
+    def view_progress(self, obj):
+        url = (
+            reverse("admin:enrollments_lessonprogress_changelist")
+            + f"?user__id__exact={obj.user.id}&lesson__module__course__id__exact={obj.course.id}"
+        )
+        return format_html(
+            '<a href="{}" class="viewlink">Lihat</a>', url
+        )
+
+
+@admin.register(LessonProgress)
+class LessonProgressAdmin(admin.ModelAdmin):
+    list_display = [
+        "user",
+        "lesson",
+        "is_completed",
+        "completed_at",
+        "last_accessed",
+    ]
+    list_filter = ["is_completed", "lesson__module__course"]
+    search_fields = ["user__username", "lesson__title"]
+    list_editable = ["is_completed"]
+    list_per_page = 20
+
+pelajari terlebih dahulu, cukup beri response bahwa anda sudah mempelajarinya
