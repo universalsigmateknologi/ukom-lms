@@ -1,0 +1,21 @@
+templates/
+├── base.html                       ✅
+├── base_full.html                  ✅ (baru)
+├── base_app.html                   ✅
+├── base_auth.html                  ✅
+├── components/
+│   ├── navbar_full.html            ✅
+│   ├── navbar_minimal.html         ✅
+│   ├── footer.html                 ✅
+│   ├── course_card.html            ✅
+│   ├── syllabus_item.html          ✅
+│   ├── lesson_resource.html        ✅
+│   └── quiz_option.html            ✅ (bonus)
+├── courses/
+│   ├── home.html                   (belum)
+│   └── detail.html                 (belum)
+├── learning/
+│   └── player.html                 (belum)
+└── accounts/
+    ├── login.html                  (belum)
+    └── register.html               (belum)

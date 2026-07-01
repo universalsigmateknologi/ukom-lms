@@ -1,0 +1,173 @@
+{% extends 'base_auth.html' %}
+
+{% block title %}Register | ACADEMIA{% endblock %}
+
+{% block auth_header_extra %}
+    <a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="{% url 'accounts:login' %}">Login</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .focus-ring:focus {
+        outline: none;
+        border-bottom: 2px solid #4450b7;
+    }
+    .form-container {
+        max-width: 420px;
+    }
+</style>
+{% endblock %}
+
+{% block page_content %}
+<div class="form-container w-full">
+    <div class="mb-12">
+        <h1 class="font-display text-display mb-4">Join the Institute.</h1>
+        <p class="text-on-surface-variant font-body-lg text-body-lg">Precision education for the focused mind.</p>
+    </div>
+
+    <!-- Error Messages -->
+    {% if form.errors %}
+    <div class="bg-error-container border border-on-error-container p-4 mb-8">
+        <ul class="space-y-1">
+            {% for field in form %}
+                {% for error in field.errors %}
+                    <li class="font-body-md text-body-md text-on-error-container">{{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+                <li class="font-body-md text-body-md text-on-error-container">{{ error }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <form method="post" class="space-y-10">
+        {% csrf_token %}
+
+        <!-- Name Field -->
+        <div class="relative">
+            <label class="font-label-sm text-label-sm text-secondary uppercase tracking-widest mb-2 block" for="id_username">
+                {{ form.username.label }}
+            </label>
+            {{ form.username }}
+        </div>
+
+        <!-- Email Field -->
+        <div class="relative">
+            <label class="font-label-sm text-label-sm text-secondary uppercase tracking-widest mb-2 block" for="id_email">
+                Email Address
+            </label>
+            {{ form.email }}
+        </div>
+
+        <!-- Password Field -->
+        <div class="relative">
+            <label class="font-label-sm text-label-sm text-secondary uppercase tracking-widest mb-2 block" for="id_password1">
+                {{ form.password1.label }}
+            </label>
+            {{ form.password1 }}
+        </div>
+
+        <!-- Confirm Password Field -->
+        <div class="relative">
+            <label class="font-label-sm text-label-sm text-secondary uppercase tracking-widest mb-2 block" for="id_password2">
+                {{ form.password2.label }}
+            </label>
+            {{ form.password2 }}
+        </div>
+
+        <div class="pt-6 space-y-6">
+            <button id="submit-btn" class="w-full bg-[#121212] text-white py-5 px-8 font-label-sm text-label-sm uppercase tracking-widest hover:bg-primary transition-colors duration-300 flex justify-between items-center group" type="submit">
+                <span>Initialize Registration</span>
+                <span class="material-symbols-outlined transform group-hover:translate-x-1 transition-transform">arrow_forward</span>
+            </button>
+
+            <div class="flex items-center gap-4 py-2">
+                <div class="h-px flex-grow bg-outline-variant"></div>
+                <span class="font-label-xs text-label-xs text-outline uppercase tracking-tighter">Identity Verification</span>
+                <div class="h-px flex-grow bg-outline-variant"></div>
+            </div>
+
+            <button class="w-full bg-transparent border border-[#121212] text-[#121212] py-5 px-8 font-label-sm text-label-sm uppercase tracking-widest hover:bg-surface-container-low transition-all duration-300 flex items-center justify-center gap-3" type="button">
+                <svg class="w-5 h-5" viewBox="0 0 24 24">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="currentColor"></path>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="currentColor"></path>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="currentColor"></path>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="currentColor"></path>
+                </svg>
+                <span>Continue with Education ID</span>
+            </button>
+        </div>
+    </form>
+
+    <div class="mt-12 text-center">
+        <p class="font-body-md text-body-md text-on-surface-variant">
+            Already a member? 
+            <a class="text-primary font-bold hover:underline underline-offset-4" href="{% url 'accounts:login' %}">Sign in here.</a>
+        </p>
+    </div>
+</div>
+
+<!-- Visual Anchor / Geometric Art -->
+<section class="hidden lg:fixed lg:right-0 lg:top-0 lg:bottom-0 lg:w-1/3 lg:flex flex-col bg-surface-container-low border-l border-outline-variant overflow-hidden">
+    <div class="flex-grow relative overflow-hidden flex items-center justify-center">
+        <!-- Atmospheric Shader Background -->
+        <div class="absolute inset-0 opacity-10 pointer-events-none">
+            <div class="w-full h-full" style="background-image: radial-gradient(circle at 2px 2px, #4450b7 1px, transparent 0); background-size: 40px 40px;"></div>
+        </div>
+        <div class="p-margin-desktop z-10">
+            <div class="w-24 h-px bg-primary mb-8"></div>
+            <h2 class="font-headline-lg text-headline-lg text-on-surface mb-6">"Simplicity is the ultimate sophistication."</h2>
+            <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">— Leonardo da Vinci</p>
+            <div class="mt-16 grid grid-cols-2 gap-4">
+                <div class="p-6 bg-surface border border-outline-variant">
+                    <span class="material-symbols-outlined text-primary mb-4">school</span>
+                    <h3 class="font-label-sm text-label-sm uppercase tracking-widest font-bold">Curated</h3>
+                </div>
+                <div class="p-6 bg-surface border border-outline-variant">
+                    <span class="material-symbols-outlined text-primary mb-4">speed</span>
+                    <h3 class="font-label-sm text-label-sm uppercase tracking-widest font-bold">Optimal</h3>
+                </div>
+                <div class="p-6 bg-surface border border-outline-variant">
+                    <span class="material-symbols-outlined text-primary mb-4">verified</span>
+                    <h3 class="font-label-sm text-label-sm uppercase tracking-widest font-bold">Certified</h3>
+                </div>
+                <div class="p-6 bg-surface border border-outline-variant">
+                    <span class="material-symbols-outlined text-primary mb-4">auto_awesome</span>
+                    <h3 class="font-label-sm text-label-sm uppercase tracking-widest font-bold">Advanced</h3>
+                </div>
+            </div>
+        </div>
+        <!-- Minimal Illustration -->
+        <div class="absolute bottom-12 right-12 w-64 h-64 border border-outline-variant rotate-12 opacity-20"></div>
+        <div class="absolute bottom-24 right-24 w-64 h-64 border border-primary -rotate-6 opacity-20"></div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Simple micro-interaction for form inputs
+    document.querySelectorAll('input').forEach(input => {
+        input.addEventListener('focus', () => {
+            input.previousElementSibling.style.color = '#4450b7';
+        });
+        input.addEventListener('blur', () => {
+            input.previousElementSibling.style.color = '';
+        });
+    });
+
+    // Form submission animation
+    const form = document.querySelector('form');
+    form.addEventListener('submit', (e) => {
+        const btn = document.getElementById('submit-btn');
+        if(btn) {
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<span class="font-label-sm uppercase tracking-widest">Processing...</span>';
+            btn.style.opacity = '0.7';
+            btn.disabled = true;
+            // Form will submit naturally after this
+        }
+    });
+</script>
+{% endblock %}

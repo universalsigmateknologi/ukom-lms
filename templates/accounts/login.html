@@ -1,0 +1,117 @@
+{% extends 'base_auth.html' %}
+
+{% block title %}Login | ACADEMIA{% endblock %}
+
+{# Suppress navbar untuk halaman login #}
+{% block auth_header %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background-color: #fcf9f8;
+        -webkit-font-smoothing: antialiased;
+    }
+</style>
+{% endblock %}
+
+{% block page_content %}
+<div class="w-full max-w-[400px] flex flex-col gap-10">
+    <!-- Brand Anchor -->
+    <div class="text-center">
+        <h1 class="font-display text-display tracking-tighter text-on-surface mb-2">ACADEMIA</h1>
+        <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-[0.2em]">Intellectual Clarity</p>
+    </div>
+
+    <!-- Error Messages -->
+    {% if form.non_field_errors %}
+    <div class="bg-error-container border border-on-error-container p-4">
+        {% for error in form.non_field_errors %}
+            <p class="font-body-md text-body-md text-on-error-container">{{ error }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Login Form -->
+    <form method="post" class="flex flex-col gap-8">
+        {% csrf_token %}
+
+        <div class="space-y-6">
+            <!-- Email/Username Field -->
+            <div class="flex flex-col gap-2">
+                <label class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest" for="id_username">
+                    {{ form.username.label }}
+                </label>
+                <div class="relative group">
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        <span class="text-error font-label-xs text-label-xs mt-1 block">{{ form.username.errors.0 }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Password Field -->
+            <div class="flex flex-col gap-2">
+                <div class="flex justify-between items-end">
+                    <label class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest" for="id_password">
+                        Password
+                    </label>
+                    <a class="font-label-xs text-label-xs text-primary hover:underline transition-all" href="#">Forgot?</a>
+                </div>
+                <div class="relative group">
+                    {{ form.password }}
+                    {% if form.password.errors %}
+                        <span class="text-error font-label-xs text-label-xs mt-1 block">{{ form.password.errors.0 }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Primary Action -->
+        <div class="pt-4">
+            <button class="w-full bg-[#121212] text-white py-4 font-label-sm text-label-sm uppercase tracking-widest hover:bg-primary transition-colors duration-300 sharp-edge flex items-center justify-center gap-2" type="submit">
+                Sign In
+                <span class="material-symbols-outlined">arrow_forward</span>
+            </button>
+        </div>
+    </form>
+
+    <!-- Secondary Action -->
+    <div class="text-center pt-2">
+        <p class="font-body-md text-body-md text-on-surface-variant">
+            New to Academia? 
+            <a class="text-primary font-medium hover:underline decoration-1 underline-offset-4 transition-all" href="{% url 'accounts:register' %}">Create account</a>
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Simple micro-interaction for the login button
+    const loginBtn = document.querySelector('button[type="submit"]');
+    if(loginBtn) {
+        loginBtn.addEventListener('mousedown', () => {
+            loginBtn.style.transform = 'scale(0.98)';
+        });
+        loginBtn.addEventListener('mouseup', () => {
+            loginBtn.style.transform = 'scale(1)';
+        });
+        loginBtn.addEventListener('mouseleave', () => {
+            loginBtn.style.transform = 'scale(1)';
+        });
+    }
+
+    // Form focus effect
+    const inputs = document.querySelectorAll('input');
+    inputs.forEach(input => {
+        input.addEventListener('focus', () => {
+            input.parentElement.style.opacity = '1';
+        });
+        input.addEventListener('blur', () => {
+            if(!input.value) {
+                input.parentElement.style.opacity = '0.8';
+            }
+        });
+    });
+</script>
+{% endblock %}
