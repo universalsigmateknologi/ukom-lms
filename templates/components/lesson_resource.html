@@ -1,0 +1,14 @@
+{# 
+   Expected context:
+   - icon: string (Material Symbols name, e.g. "description", "brush", "link")
+   - name: string (resource name)
+   - meta: string (file size or "External Link")
+   - url: string (download URL or external URL)
+#}
+<a class="flex items-center gap-3 p-3 hover:bg-surface-container-low transition-colors group" href="{{ url }}" {% if url|slice:":4" == "http" %}target="_blank" rel="noopener noreferrer"{% endif %}>
+    <span class="material-symbols-outlined text-outline-variant group-hover:text-primary">{{ icon }}</span>
+    <div class="flex flex-col">
+        <span class="text-sm font-medium">{{ name }}</span>
+        <span class="text-xs text-outline">{{ meta }}</span>
+    </div>
+</a>

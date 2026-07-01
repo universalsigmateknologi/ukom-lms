@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block body_class %}scroll-smooth{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hairline-border { border: 1px solid #E5E5E5; }
+    .course-card:hover .card-indicator { width: 100%; }
+    .card-indicator { width: 0%; transition: width 0.3s ease-in-out; }
+</style>
+{% endblock %}
+
+{% block content %}
+{% include 'components/navbar_full.html' %}
+<main class="pt-24">
+    {% block page_content %}{% endblock %}
+</main>
+{% include 'components/footer.html' %}
+{% endblock %}

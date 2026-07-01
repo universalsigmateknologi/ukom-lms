@@ -1,0 +1,35 @@
+{# 
+   Expected context:
+   - choice: Choice object
+   - question_index: integer
+   - is_selected: boolean (for review mode)
+   - is_correct_answer: boolean (for review mode)
+   - show_result: boolean (hide right/wrong states until submit)
+#}
+<label class="flex items-center gap-4 p-4 border border-outline-variant hover:bg-surface-container-low transition-colors cursor-pointer 
+    {% if show_result and is_selected and is_correct_answer %}border-primary bg-primary-fixed-dim{% endif %}
+    {% if show_result and is_selected and not is_correct_answer %}border-error bg-error-container{% endif %}
+    {% if show_result and not is_selected and is_correct_answer %}border-primary bg-primary-fixed-dim{% endif %}"
+    for="choice_{{ question_index }}_{{ choice.id }}">
+    
+    <input type="radio" 
+           name="question_{{ question_index }}" 
+           id="choice_{{ question_index }}_{{ choice.id }}" 
+           value="{{ choice.id }}"
+           class="w-4 h-4 accent-[#4450b7]"
+           {% if is_selected %}checked{% endif %}
+           {% if show_result %}disabled{% endif %}>
+
+    <span class="font-body-md text-body-md flex-grow">
+        {{ choice.choice_text }}
+    </span>
+
+    <!-- Result Icons (only shown after submit) -->
+    {% if show_result %}
+        {% if is_correct_answer %}
+            <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+        {% elif is_selected and not is_correct_answer %}
+            <span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">cancel</span>
+        {% endif %}
+    {% endif %}
+</label>

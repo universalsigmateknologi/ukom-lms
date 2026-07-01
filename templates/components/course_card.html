@@ -1,0 +1,49 @@
+{# 
+   Expected context:
+   - course: Course object (with .thumbnail, .category, .title, .description)
+   - index: loop counter (for ordering, optional)
+#}
+<a href="{% url 'courses:detail' course.slug %}" class="hairline-border bg-white p-8 flex flex-col h-full group hover:bg-surface-container-low transition-colors duration-300 relative overflow-hidden">
+    <!-- Thumbnail -->
+    <div class="mb-8 overflow-hidden h-48 bg-surface-container-highest grayscale hover:grayscale-0 transition-all duration-500">
+        {% if course.thumbnail %}
+            <img class="w-full h-full object-cover" src="{{ course.thumbnail.url }}" alt="{{ course.title }}"/>
+        {% else %}
+            <div class="w-full h-full flex items-center justify-center">
+                <span class="material-symbols-outlined text-4xl text-outline-variant">image</span>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Category -->
+    {% if course.category %}
+        <div class="font-label-xs text-label-xs text-primary mb-2 uppercase tracking-widest">{{ course.category.name }}</div>
+    {% else %}
+        <div class="font-label-xs text-label-xs text-primary mb-2 uppercase tracking-widest">Uncategorized</div>
+    {% endif %}
+
+    <!-- Title -->
+    <h3 class="font-headline-md text-headline-md mb-4">{{ course.title }}</h3>
+
+    <!-- Description -->
+    <p class="font-body-md text-body-md text-on-surface-variant mb-8 flex-grow">
+        {{ course.description|truncatewords:20 }}
+    </p>
+
+    <!-- Meta Footer -->
+    <div class="flex justify-between items-center mt-auto">
+        <div class="flex items-center gap-4">
+            <span class="font-label-sm text-label-sm text-on-surface-variant">
+                {{ course.total_modules }} Modules
+            </span>
+            <span class="text-outline-variant">·</span>
+            <span class="font-label-sm text-label-sm text-on-surface-variant">
+                {{ course.total_duration }} Min
+            </span>
+        </div>
+        <span class="material-symbols-outlined text-primary">add_circle</span>
+    </div>
+
+    <!-- Bottom Indicator -->
+    <div class="absolute bottom-0 left-0 h-1 bg-primary card-indicator"></div>
+</a>

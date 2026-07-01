@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block body_class %}min-h-screen flex flex-col{% endblock %}
+
+{% block extra_css %}
+<style>
+    .focus-ring:focus {
+        outline: none;
+        border-bottom: 2px solid #4450b7;
+    }
+    .sharp-edge { border-radius: 0 !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Optional Header (Override di child jika tidak dibutuhkan) -->
+{% block auth_header %}
+<header class="w-full top-0 bg-surface border-b border-outline-variant">
+    <div class="flex justify-between items-center px-margin-desktop py-4 max-w-container-max mx-auto">
+        <a href="{% url 'courses:home' %}" class="font-headline-md text-headline-md font-bold text-on-surface tracking-tight">ACADEMIA</a>
+        <div class="flex items-center gap-gutter">
+            {% block auth_header_extra %}{% endblock %}
+        </div>
+    </div>
+</header>
+{% endblock %}
+
+<!-- Main Auth Content -->
+<main class="flex-grow flex items-center justify-center px-margin-mobile py-section-gap">
+    {% block page_content %}{% endblock %}
+</main>
+
+<!-- Footer -->
+<footer class="w-full py-section-gap bg-surface-container-low border-t border-outline-variant mt-auto">
+    <div class="flex flex-col md:flex-row justify-between items-center px-margin-desktop gap-gutter max-w-container-max mx-auto">
+        <span class="font-label-sm text-label-sm uppercase tracking-widest text-secondary">ACADEMIA</span>
+        <div class="flex gap-gutter">
+            <a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary underline transition-all" href="#">Privacy Policy</a>
+            <a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary underline transition-all" href="#">Terms of Service</a>
+            <a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary underline transition-all" href="#">Contact</a>
+        </div>
+        <p class="font-label-sm text-label-sm text-on-surface-variant">© 2024 Academia Institute. All rights reserved.</p>
+    </div>
+</footer>
+{% endblock %}

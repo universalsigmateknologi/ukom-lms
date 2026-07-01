@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block body_class %}overflow-x-hidden{% endblock %}
+
+{% block extra_css %}
+<style>
+    .syllabus-item:hover .syllabus-number { color: #4450b7; }
+    .syllabus-item.active { background-color: #f6f3f2; border-right: 2px solid #4450b7; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Navbar Minimal -->
+<nav class="w-full top-0 border-b border-outline-variant bg-surface sticky z-50">
+    <div class="flex justify-between items-center px-margin-desktop py-4 max-w-container-max mx-auto">
+        <div class="flex items-center gap-12">
+            <a href="{% url 'courses:home' %}" class="font-headline-md text-headline-md font-bold text-on-surface">ACADEMIA</a>
+            <div class="hidden md:flex items-center gap-8">
+                <a class="text-primary font-bold border-b-2 border-primary duration-200 ease-in-out py-1" href="{% url 'courses:home' %}">Courses</a>
+                <a class="text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200 ease-in-out py-1 px-2" href="#">About</a>
+            </div>
+        </div>
+        <div class="flex items-center gap-6">
+            {% if user.is_authenticated %}
+                <span class="text-on-surface-variant font-label-sm text-label-sm">{{ user.username }}</span>
+                <a href="{% url 'accounts:logout' %}" class="text-on-surface-variant font-label-sm text-label-sm hover:text-primary transition-all">Logout</a>
+            {% else %}
+                <a href="{% url 'accounts:login' %}" class="text-on-surface-variant font-label-sm text-label-sm hover:text-primary transition-all">Login</a>
+                <a href="{% url 'accounts:register' %}" class="bg-[#121212] text-white px-6 py-2 text-label-sm font-label-sm hover:bg-primary transition-colors">Register</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<!-- Main Layout: Sidebar + Content -->
+<main class="flex min-h-screen">
+    <!-- Sidebar -->
+    <aside class="hidden lg:flex flex-col w-[320px] border-r border-outline-variant sticky top-[73px] h-[calc(100vh-73px)] bg-surface overflow-y-auto">
+        {% block sidebar %}{% endblock %}
+    </aside>
+
+    <!-- Main Content Area -->
+    <section class="flex-grow flex flex-col items-center bg-white">
+        {% block page_content %}{% endblock %}
+
+        <!-- Footer (Inside Content) -->
+        <footer class="w-full mt-auto border-t border-outline-variant bg-surface-container-low py-12">
+            <div class="flex flex-col md:flex-row justify-between items-center px-margin-desktop gap-gutter max-w-container-max mx-auto">
+                <span class="font-label-sm text-label-sm uppercase tracking-widest text-secondary">ACADEMIA</span>
+                <div class="flex gap-8">
+                    <a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary underline transition-all" href="#">Privacy Policy</a>
+                    <a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary underline transition-all" href="#">Terms of Service</a>
+                    <a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary underline transition-all" href="#">Contact</a>
+                </div>
+                <p class="font-label-sm text-label-sm text-on-surface-variant">© 2024 Academia Institute. All rights reserved.</p>
+            </div>
+        </footer>
+    </section>
+</main>
+{% endblock %}

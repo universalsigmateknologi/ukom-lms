@@ -1,0 +1,32 @@
+{# 
+   Expected context:
+   - lesson: Lesson object
+   - is_active: boolean
+   - is_locked: boolean
+   - is_completed: boolean
+   - index: integer (for numbering, e.g. "01", "02")
+#}
+<a href="{% if not is_locked %}{% url 'learning:player' lesson.module.course.slug lesson.module.id lesson.id %}{% else %}#{% endif %}" 
+   class="syllabus-item {% if is_active %}active{% endif %} flex items-center gap-4 px-8 py-4 transition-all {% if not is_locked %}hover:bg-surface-container-low cursor-pointer{% else %}cursor-not-allowed opacity-60{% endif %}">
+    
+    <!-- Number -->
+    <span class="font-label-sm text-label-sm {% if is_active %}text-primary{% else %}text-outline{% endif %} syllabus-number">
+        {{ index|stringformat:"02d" }}
+    </span>
+
+    <!-- Title -->
+    <span class="text-on-surface {% if is_active %}font-medium{% endif %} truncate">
+        {{ lesson.title }}
+    </span>
+
+    <!-- Status Icon -->
+    {% if is_completed %}
+        <span class="material-symbols-outlined ml-auto text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+    {% elif is_active %}
+        <span class="material-symbols-outlined ml-auto text-on-surface-variant">play_circle</span>
+    {% elif is_locked %}
+        <span class="material-symbols-outlined ml-auto text-outline">lock</span>
+    {% else %}
+        <span class="material-symbols-outlined ml-auto text-outline-variant">radio_button_unchecked</span>
+    {% endif %}
+</a>
