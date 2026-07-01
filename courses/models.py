@@ -7,9 +7,7 @@ class Category(models.Model):
     slug = models.SlugField(max_length=100, unique=True, editable=False)
     description = models.TextField(blank=True, verbose_name="Deskripsi")
     icon = models.CharField(
-        max_length=50, 
-        blank=True, 
-        verbose_name="Icon",
+        max_length=50, blank=True, verbose_name="Icon",
         help_text="Contoh: fas fa-code, fas fa-paint-brush"
     )
     created_at = models.DateTimeField(auto_now_add=True)
@@ -44,25 +42,15 @@ class Course(models.Model):
     slug = models.SlugField(max_length=200, unique=True, editable=False)
     description = models.TextField(verbose_name="Deskripsi")
     thumbnail = models.ImageField(
-        upload_to="courses/thumbnails/",
-        blank=True,
-        null=True,
-        verbose_name="Thumbnail",
+        upload_to="courses/thumbnails/", blank=True, null=True, verbose_name="Thumbnail"
     )
     category = models.ForeignKey(
-        Category,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="courses",
-        verbose_name="Kategori",
+        Category, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="courses", verbose_name="Kategori"
     )
     instructor = models.ForeignKey(
-        "auth.User",
-        on_delete=models.CASCADE,
-        related_name="courses_taught",
-        verbose_name="Instruktur",
-        limit_choices_to={"is_staff": True},
+        "auth.User", on_delete=models.CASCADE, related_name="courses_taught",
+        verbose_name="Instruktur", limit_choices_to={"is_staff": True}
     )
     level = models.CharField(
         max_length=20, choices=LEVEL_CHOICES, default="beginner", verbose_name="Level"
@@ -70,9 +58,7 @@ class Course(models.Model):
     status = models.CharField(
         max_length=20, choices=STATUS_CHOICES, default="draft", verbose_name="Status"
     )
-    total_duration = models.IntegerField(
-        default=0, verbose_name="Total Durasi (menit)"
-    )
+    total_duration = models.IntegerField(default=0, verbose_name="Total Durasi (menit)")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Dibuat")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Diperbarui")
 
@@ -104,10 +90,7 @@ class Course(models.Model):
 
 class Module(models.Model):
     course = models.ForeignKey(
-        Course,
-        on_delete=models.CASCADE,
-        related_name="modules",
-        verbose_name="Kursus",
+        Course, on_delete=models.CASCADE, related_name="modules", verbose_name="Kursus"
     )
     title = models.CharField(max_length=200, verbose_name="Judul Module")
     description = models.TextField(blank=True, verbose_name="Deskripsi")
@@ -141,10 +124,7 @@ class Lesson(models.Model):
     ]
 
     module = models.ForeignKey(
-        Module,
-        on_delete=models.CASCADE,
-        related_name="lessons",
-        verbose_name="Module",
+        Module, on_delete=models.CASCADE, related_name="lessons", verbose_name="Module"
     )
     title = models.CharField(max_length=200, verbose_name="Judul Materi")
     content_type = models.CharField(
@@ -158,6 +138,26 @@ class Lesson(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # ========== FIELD KUIS ==========
+    time_limit = models.PositiveIntegerField(
+        null=True, blank=True, verbose_name="Batas Waktu (menit)",
+        help_text="Kosongkan jika tidak ada batas waktu"
+    )
+    passing_grade = models.PositiveIntegerField(
+        null=True, blank=True, verbose_name="Nilai Minimum (%)",
+        help_text="Kosongkan jika tidak ada syarat kelulusan"
+    )
+    max_attempts = models.PositiveIntegerField(
+        null=True, blank=True, verbose_name="Maks Percobaan",
+        help_text="Kosongkan jika tidak terbatas"
+    )
+    shuffle_questions = models.BooleanField(
+        default=False, verbose_name="Acak Urutan Soal"
+    )
+    shuffle_choices = models.BooleanField(
+        default=False, verbose_name="Acak Urutan Pilihan Jawaban"
+    )
+
     class Meta:
         verbose_name = "Materi"
         verbose_name_plural = "Materi"
@@ -166,3 +166,14 @@ class Lesson(models.Model):
 
     def __str__(self):
         return f"{self.module.title} - {self.title}"
+
+    @property
+    def is_quiz(self):
+        return self.content_type == "quiz"
+
+    @property
+    def total_questions(self):
+        if self.is_quiz:
+            from quizzes.models import Question
+            return Question.objects.filter(lesson=self).count()
+        return 0
